@@ -96,9 +96,37 @@ static void print_commit(const ObjectID *id, const Commit *commit, void *ctx) {
 
 // Usage: pes log
 void cmd_log(void) {
-    if (commit_walk(print_commit, NULL) != 0) {
-        fprintf(stderr, "No commits yet.\n");
+    FILE *f = fopen(".pes/HEAD", "r");
+    if (!f) {
+        printf("No commits yet.\n");
+        return;
     }
+
+    char hash[65];
+    if (fscanf(f, "%64s", hash) != 1) {
+        fclose(f);
+        printf("No commits yet.\n");
+        return;
+    }
+    fclose(f);
+
+    printf("commit %s\n", hash);
+
+    ObjectID id;
+    hex_to_hash(hash, &id);
+
+    ObjectType type;
+    void *data;
+    size_t len;
+
+    if (object_read(&id, &type, &data, &len) != 0) {
+        printf("Error reading commit\n");
+        return;
+    }
+
+    printf("%s\n", (char *)data);
+
+    free(data);
 }
 
 // ─── PROVIDED: Command dispatch ─────────────────────────────────────────────
